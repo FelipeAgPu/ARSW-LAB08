@@ -30,9 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     
     <body onload="app.init()">
+        Dibujo:<input id="dibujo" type="number">
+        <button onclick="app.subscribe()">Suscribirse</button>
+        <br/>
         X:<input id="x" type="number"/>
         Y:<input id="y" type="number"/>        
-        <button onclick="app.publishPoint(document.getElementById('x').value,document.getElementById('y').value)">Send point</button>
+        <button onclick="app.publishPoint(document.getElementById('x').value,document.getElementById('y').value)">Enviar punto</button>
+        <br/>
         <canvas id="canvas" width="800" height="600"></canvas>
     </body>
 </html>

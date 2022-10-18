@@ -8,6 +8,7 @@ var app = (function () {
     }
     
     var stompClient = null;
+    let draw = null;
 
     var addPointToCanvas = function (point) {        
         var canvas = document.getElementById("canvas");
@@ -35,12 +36,13 @@ var app = (function () {
             var x = event.pageX - elemLeft,
             y = event.pageY - elemTop;
             var pt=new Point(x,y);
-            stompClient.send("/topic/newpoint", {}, JSON.stringify(pt)); ;
+            stompClient.send(`/topic/newpoint.${draw}`, {}, JSON.stringify(pt)); ;
         });
     };
 
 
-    var connectAndSubscribe = function () {
+    var connectAndSubscribe = function (topic) {
+        draw = topic
         console.info('Connecting to WS...');
         var socket = new SockJS('/stompendpoint');
         stompClient = Stomp.over(socket);
@@ -48,7 +50,7 @@ var app = (function () {
         //subscribe to /topic/TOPICXX when connections succeed
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
-            stompClient.subscribe('/topic/newpoint', function (eventbody) {
+            stompClient.subscribe(`/topic/newpoint.${draw}`, function (eventbody) {
                 var theObject = JSON.parse(eventbody.body);
                 console.log(theObject)
                 var point = new Point(theObject.x, theObject.y);
@@ -66,8 +68,12 @@ var app = (function () {
             var can = document.getElementById("canvas");
             
             //websocket connection
-            connectAndSubscribe();
             mouseEventListener();
+        },
+
+        subscribe: function () {
+            let topic = document.getElementById("dibujo").value;
+            connectAndSubscribe(topic);
         },
 
         publishPoint: function(px, py){
@@ -79,7 +85,7 @@ var app = (function () {
             //creando un objeto literal
             // stompClient.send("/topic/newpoint", {}, JSON.stringify({x:10,y:10}));
             //enviando un objeto creado a partir de una clase
-            stompClient.send("/topic/newpoint", {}, JSON.stringify(pt));
+            stompClient.send(`/topic/newpoint.${draw}`, {}, JSON.stringify(pt));
         },
 
         disconnect: function () {
