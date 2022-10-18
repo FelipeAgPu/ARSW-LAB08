@@ -27,6 +27,18 @@ var app = (function () {
         };
     };
 
+    let mouseEventListener = function () {
+        let canvas = document.getElementById("canvas");
+        elemLeft = canvas.offsetLeft + canvas.clientLeft,
+        elemTop = canvas.offsetTop + canvas.clientTop,
+        canvas.addEventListener('click', function(event) {
+            var x = event.pageX - elemLeft,
+            y = event.pageY - elemTop;
+            var pt=new Point(x,y);
+            stompClient.send("/topic/newpoint", {}, JSON.stringify(pt)); ;
+        });
+    };
+
 
     var connectAndSubscribe = function () {
         console.info('Connecting to WS...');
@@ -37,8 +49,10 @@ var app = (function () {
         stompClient.connect({}, function (frame) {
             console.log('Connected: ' + frame);
             stompClient.subscribe('/topic/newpoint', function (eventbody) {
-                var theObject=JSON.parse(eventbody.body);
-                alert(JSON.stringify(theObject));
+                var theObject = JSON.parse(eventbody.body);
+                console.log(theObject)
+                var point = new Point(theObject.x, theObject.y);
+                addPointToCanvas(point);
             });
         });
 
@@ -53,12 +67,10 @@ var app = (function () {
             
             //websocket connection
             connectAndSubscribe();
+            mouseEventListener();
         },
 
-        publishPoint: function(){
-            let px = document.getElementById('x').value;
-            let py = document.getElementById('y').value;
-            debugger;
+        publishPoint: function(px, py){
             var pt=new Point(px,py);
             console.info("publishing point at "+pt);
             addPointToCanvas(pt);
