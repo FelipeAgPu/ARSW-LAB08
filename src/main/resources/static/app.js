@@ -9,16 +9,36 @@ var app = (function () {
     
     var stompClient = null;
     let draw = null;
+    const vertex = 4;
 
     var addPointToCanvas = function (point) {        
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
+        ctx.strokeStyle = "black";
         ctx.beginPath();
         ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
         ctx.stroke();
     };
-    
-    
+
+    const addLineToCanvas = (x0, y0, x1, y1) => {
+              var canvas = document.getElementById("canvas");
+              var ctx = canvas.getContext("2d");
+              ctx.beginPath();
+              ctx.strokeStyle = "blue";
+              ctx.moveTo(x0, y0);
+              ctx.lineTo(x1, y1);
+              ctx.stroke();
+    }
+
+    const drawPolygon =  (polygon) => {
+        for (let index = 0; index < vertex - 1; index++) {
+            let p1 = polygon[index];
+            let p2 = polygon[index+1];
+            addLineToCanvas(p1.x, p1.y, p2.x, p2.y);
+        }
+        addLineToCanvas(polygon[0].x, polygon[0].y, polygon[vertex - 1].x, polygon[vertex - 1].y)
+    }
+
     var getMousePosition = function (evt) {
         canvas = document.getElementById("canvas");
         var rect = canvas.getBoundingClientRect();
@@ -36,7 +56,7 @@ var app = (function () {
             var x = event.pageX - elemLeft,
             y = event.pageY - elemTop;
             var pt=new Point(x,y);
-            stompClient.send(`/topic/newpoint.${draw}`, {}, JSON.stringify(pt)); ;
+            stompClient.send(`/app/newpoint.${draw}`, {}, JSON.stringify(pt)); ;
         });
     };
 
@@ -55,6 +75,12 @@ var app = (function () {
                 console.log(theObject)
                 var point = new Point(theObject.x, theObject.y);
                 addPointToCanvas(point);
+            });
+
+            stompClient.subscribe(`/topic/newpolygon.${draw}`, function (eventbody) {
+                var theObject = JSON.parse(eventbody.body);
+                console.log("Polygon: " + theObject)
+                drawPolygon(theObject);
             });
         });
 
@@ -85,7 +111,7 @@ var app = (function () {
             //creando un objeto literal
             // stompClient.send("/topic/newpoint", {}, JSON.stringify({x:10,y:10}));
             //enviando un objeto creado a partir de una clase
-            stompClient.send(`/topic/newpoint.${draw}`, {}, JSON.stringify(pt));
+            stompClient.send(`/app/newpoint.${draw}`, {}, JSON.stringify(pt));
         },
 
         disconnect: function () {
